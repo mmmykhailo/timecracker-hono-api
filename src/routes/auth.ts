@@ -24,7 +24,7 @@ const refreshTokenSchema = z.object({
 });
 
 const tokenResponseSchema = z.object({
-	token: z.string(),
+	accessToken: z.string(),
 	refreshToken: z.string(),
 	user: z.object({
 		username: z.string(),

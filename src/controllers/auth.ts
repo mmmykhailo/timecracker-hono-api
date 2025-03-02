@@ -45,14 +45,13 @@ export async function register(c: Context) {
 		password: hashedPassword,
 	});
 
-	const token = await generateJWT(user);
-	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+	const { accessToken, refreshToken } = await generateJwt(user);
 
 	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json(
 		{
-			token,
+			accessToken,
 			refreshToken,
 			user: {
 				username: user.username,
@@ -76,14 +75,13 @@ export async function login(c: Context) {
 		throw new HTTPException(401, { message: "Invalid credentials" });
 	}
 
-	const token = await generateJWT(user);
-	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+	const { accessToken, refreshToken } = await generateJwt(user);
 
 	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json(
 		{
-			token,
+			accessToken,
 			refreshToken,
 			user: {
 				username: user.username,
@@ -203,14 +201,13 @@ export async function githubCallback(c: Context) {
 		);
 	}
 
-	const token = await generateJWT(user);
-	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+	const { accessToken, refreshToken } = await generateJwt(user);
 
 	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json(
 		{
-			token,
+			accessToken,
 			refreshToken,
 			user: {
 				username: user.username,
@@ -239,18 +236,14 @@ export const refreshToken = async (c: Context) => {
 		return c.json({ error: "User not found or token revoked" }, 401);
 	}
 
-	const newAccessToken = await sign(
-		{ id: user._id, username: user.username, email: user.email },
-		JWT_SECRET,
-	);
+	const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+		await generateJwt(user);
 
-	const newRefreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
-
-	await updateUserRefreshToken(user._id, newRefreshToken);
+	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json(
 		{
-			token: newAccessToken,
+			accessToken: newAccessToken,
 			refreshToken: newRefreshToken,
 			user: {
 				username: user.username,
@@ -279,10 +272,20 @@ export async function getProfile(c: Context) {
 	});
 }
 
-async function generateJWT(user: User) {
-	const payload: JWTPayload = {
+async function generateJwt(user: User) {
+	const accessTokenPayload: JWTPayload = {
 		username: user.username,
 		email: user.email,
+		exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 mins
 	};
-	return await sign(payload, JWT_SECRET);
+	const refreshTokenPayload: JWTPayload = {
+		username: user.username,
+		email: user.email,
+		exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 1 week
+	};
+	const [accessToken, refreshToken] = await Promise.all([
+		sign(accessTokenPayload, JWT_SECRET),
+		sign(refreshTokenPayload, JWT_SECRET),
+	]);
+	return { accessToken, refreshToken };
 }
