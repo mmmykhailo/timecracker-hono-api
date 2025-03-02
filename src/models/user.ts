@@ -1,15 +1,17 @@
 import { getCollection } from "../db/connection";
 import type { ObjectId, WithId } from "mongodb";
 
-export interface User {
-	_id?: ObjectId;
+export type User = {
+	_id: ObjectId;
 	username: string;
 	email: string;
 	password?: string;
 	githubId?: number;
 	createdAt: Date;
 	updatedAt: Date;
-}
+};
+export type UserData = Omit<User, "_id" | "createdAt" | "updatedAt">;
+export type NewUser = UserData & Pick<User, "createdAt" | "updatedAt">;
 
 export async function findUserByUsername(
 	username: string,
@@ -30,14 +32,12 @@ export async function findUserByGithubId(
 	return await users.findOne({ githubId });
 }
 
-export async function createUser(
-	userData: Omit<User, "createdAt" | "updatedAt">,
-): Promise<User> {
+export async function createUser(userData: UserData): Promise<User> {
 	const users = getCollection("users");
 
 	const now = new Date();
 
-	const newUser: User = {
+	const newUser: NewUser = {
 		username: userData.username,
 		email: userData.email,
 		password: userData.password,
@@ -47,7 +47,26 @@ export async function createUser(
 	};
 
 	const result = await users.insertOne(newUser);
-	return { ...newUser, _id: result.insertedId };
+	const user: User = { ...newUser, _id: result.insertedId };
+	return user;
+}
+
+export async function findUserByRefreshToken(
+	refreshToken: string,
+): Promise<User | null> {
+	const users = getCollection<User>("users");
+	return await users.findOne({ refreshToken });
+}
+
+export async function updateUserRefreshToken(
+	userId: ObjectId,
+	refreshToken: string,
+): Promise<void> {
+	const users = getCollection<User>("users");
+	await users.updateOne(
+		{ _id: userId },
+		{ $set: { refreshToken, updatedAt: new Date() } },
+	);
 }
 
 export async function validatePassword(

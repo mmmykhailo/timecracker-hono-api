@@ -5,6 +5,7 @@ import {
 	githubAuth,
 	githubCallback,
 	logout,
+	refreshToken,
 } from "../controllers/auth";
 
 const loginSchema = z.object({
@@ -16,6 +17,10 @@ const registerSchema = z.object({
 	username: z.string().min(3),
 	password: z.string().min(6),
 	email: z.string().email(),
+});
+
+const refreshTokenSchema = z.object({
+	refreshToken: z.string(),
 });
 
 const tokenResponseSchema = z.object({
@@ -130,6 +135,37 @@ app.openapi(
 		},
 	}),
 	githubCallback,
+);
+
+app.openapi(
+	createRoute({
+		tags: ["Auth"],
+		method: "post",
+		path: "/refresh",
+		request: {
+			body: {
+				content: {
+					"application/json": {
+						schema: refreshTokenSchema,
+					},
+				},
+			},
+		},
+		responses: {
+			200: {
+				description: "New access token generated",
+				content: {
+					"application/json": {
+						schema: z.object({ token: z.string() }),
+					},
+				},
+			},
+			401: {
+				description: "Invalid refresh token",
+			},
+		},
+	}),
+	refreshToken,
 );
 
 app.openapi(

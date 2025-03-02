@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { sign } from "hono/jwt";
+import { sign, verify } from "hono/jwt";
 import { HTTPException } from "hono/http-exception";
 import {
 	findUserByUsername,
@@ -9,12 +9,14 @@ import {
 	validatePassword,
 	hashPassword,
 	type User,
+	findUserByRefreshToken,
+	updateUserRefreshToken,
 } from "../models/user";
 import { getCollection } from "../db/connection";
 import type { JWTPayload } from "hono/utils/jwt/types";
 
-// Environment variables
-const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret";
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-secret";
 const GITHUB_CLIENT_ID =
 	process.env.GITHUB_CLIENT_ID || "your-github-client-id";
 const GITHUB_CLIENT_SECRET =
@@ -25,29 +27,24 @@ const REDIRECT_URI =
 export async function register(c: Context) {
 	const body = await c.req.json();
 
-	// Check if username exists
 	const existingUsername = await findUserByUsername(body.username);
 	if (existingUsername) {
 		throw new HTTPException(400, { message: "Username already exists" });
 	}
 
-	// Check if email exists
 	const existingEmail = await findUserByEmail(body.email);
 	if (existingEmail) {
 		throw new HTTPException(400, { message: "Email already exists" });
 	}
 
-	// Hash password
 	const hashedPassword = await hashPassword(body.password);
 
-	// Create user
 	const user = await createUser({
 		username: body.username,
 		email: body.email,
 		password: hashedPassword,
 	});
 
-	// Generate JWT
 	const token = await generateJWT(user);
 
 	return c.json(
@@ -65,23 +62,24 @@ export async function register(c: Context) {
 export async function login(c: Context) {
 	const body = await c.req.json();
 
-	// Find user
 	const user = await findUserByUsername(body.username);
 	if (!user) {
 		throw new HTTPException(401, { message: "Invalid credentials" });
 	}
 
-	// Validate password
 	const isPasswordValid = await validatePassword(user, body.password);
 	if (!isPasswordValid) {
 		throw new HTTPException(401, { message: "Invalid credentials" });
 	}
 
-	// Generate JWT
 	const token = await generateJWT(user);
+	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+
+	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json({
 		token,
+		refreshToken,
 		user: {
 			username: user.username,
 			email: user.email,
@@ -199,15 +197,49 @@ export async function githubCallback(c: Context) {
 	}
 
 	const token = await generateJWT(user);
+	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+
+	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json({
 		token,
+		refreshToken,
 		user: {
 			username: user.username,
 			email: user.email,
 		},
 	});
 }
+
+export const refreshToken = async (c: Context) => {
+	const body = await c.req.json();
+
+	const refreshToken = body.refreshToken;
+	if (!refreshToken) {
+		return c.json({ error: "Refresh token is required" }, 401);
+	}
+
+	const payload = await verify(refreshToken, JWT_REFRESH_SECRET);
+	if (!payload) {
+		return c.json({ error: "Invalid refresh token" }, 401);
+	}
+
+	const user = await findUserByRefreshToken(refreshToken);
+	if (!user) {
+		return c.json({ error: "User not found or token revoked" }, 401);
+	}
+
+	const newAccessToken = await sign(
+		{ id: user._id, username: user.username, email: user.email },
+		JWT_SECRET,
+	);
+
+	const newRefreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+
+	await updateUserRefreshToken(user._id, newRefreshToken);
+
+	return c.json({ token: newAccessToken, refreshToken: newRefreshToken });
+};
 
 export async function logout(c: Context) {
 	return c.json(
