@@ -25,10 +25,15 @@ const refreshTokenSchema = z.object({
 
 const tokenResponseSchema = z.object({
 	token: z.string(),
+	refreshToken: z.string(),
 	user: z.object({
 		username: z.string(),
 		email: z.string().email(),
 	}),
+});
+
+const errorResponseSchema = z.object({
+	error: z.string().optional(),
 });
 
 const app = new OpenAPIHono();
@@ -58,6 +63,11 @@ app.openapi(
 			},
 			400: {
 				description: "Invalid input or username already exists",
+				content: {
+					"application/json": {
+						schema: errorResponseSchema,
+					},
+				},
 			},
 		},
 	}),
@@ -89,6 +99,11 @@ app.openapi(
 			},
 			401: {
 				description: "Invalid credentials",
+				content: {
+					"application/json": {
+						schema: errorResponseSchema,
+					},
+				},
 			},
 		},
 	}),
@@ -131,6 +146,11 @@ app.openapi(
 			},
 			400: {
 				description: "Invalid state or code",
+				content: {
+					"application/json": {
+						schema: errorResponseSchema,
+					},
+				},
 			},
 		},
 	}),
@@ -156,12 +176,17 @@ app.openapi(
 				description: "New access token generated",
 				content: {
 					"application/json": {
-						schema: z.object({ token: z.string() }),
+						schema: tokenResponseSchema,
 					},
 				},
 			},
 			401: {
 				description: "Invalid refresh token",
+				content: {
+					"application/json": {
+						schema: errorResponseSchema,
+					},
+				},
 			},
 		},
 	}),

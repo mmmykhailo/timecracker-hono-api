@@ -46,10 +46,14 @@ export async function register(c: Context) {
 	});
 
 	const token = await generateJWT(user);
+	const refreshToken = await sign({ id: user._id }, JWT_REFRESH_SECRET);
+
+	await updateUserRefreshToken(user._id, refreshToken);
 
 	return c.json(
 		{
 			token,
+			refreshToken,
 			user: {
 				username: user.username,
 				email: user.email,
@@ -77,14 +81,17 @@ export async function login(c: Context) {
 
 	await updateUserRefreshToken(user._id, refreshToken);
 
-	return c.json({
-		token,
-		refreshToken,
-		user: {
-			username: user.username,
-			email: user.email,
+	return c.json(
+		{
+			token,
+			refreshToken,
+			user: {
+				username: user.username,
+				email: user.email,
+			},
 		},
-	});
+		200,
+	);
 }
 
 export async function githubAuth(c: Context) {
@@ -201,14 +208,17 @@ export async function githubCallback(c: Context) {
 
 	await updateUserRefreshToken(user._id, refreshToken);
 
-	return c.json({
-		token,
-		refreshToken,
-		user: {
-			username: user.username,
-			email: user.email,
+	return c.json(
+		{
+			token,
+			refreshToken,
+			user: {
+				username: user.username,
+				email: user.email,
+			},
 		},
-	});
+		200,
+	);
 }
 
 export const refreshToken = async (c: Context) => {
@@ -238,7 +248,17 @@ export const refreshToken = async (c: Context) => {
 
 	await updateUserRefreshToken(user._id, newRefreshToken);
 
-	return c.json({ token: newAccessToken, refreshToken: newRefreshToken });
+	return c.json(
+		{
+			token: newAccessToken,
+			refreshToken: newRefreshToken,
+			user: {
+				username: user.username,
+				email: user.email,
+			},
+		},
+		200,
+	);
 };
 
 export async function logout(c: Context) {
