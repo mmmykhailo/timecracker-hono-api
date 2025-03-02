@@ -1,10 +1,8 @@
-import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { sign, verify } from "hono/jwt";
-import type { JWTPayload } from "hono/utils/jwt/types";
-import { getCollection } from "../db/connection";
+import { getCollection } from "../../db/connection";
+import createApp from "../../lib/createApp";
+import { generateJwt, verifyRefreshToken } from "../../lib/jwt";
 import {
-	type User,
 	createUser,
 	findUserByEmail,
 	findUserByGithubId,
@@ -13,10 +11,16 @@ import {
 	hashPassword,
 	updateUserRefreshToken,
 	validatePassword,
-} from "../models/user";
+} from "../../models/user";
+import {
+	githubAuthCallbackRoute,
+	githubAuthRoute,
+	loginRoute,
+	logoutRoute,
+	refreshTokenRoute,
+	registerRoute,
+} from "./auth.routes";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-secret";
 const GITHUB_CLIENT_ID =
 	process.env.GITHUB_CLIENT_ID || "your-github-client-id";
 const GITHUB_CLIENT_SECRET =
@@ -24,7 +28,9 @@ const GITHUB_CLIENT_SECRET =
 const REDIRECT_URI =
 	process.env.REDIRECT_URI || "http://localhost:3000/auth/github/callback";
 
-export async function register(c: Context) {
+const app = createApp();
+
+app.openapi(registerRoute, async (c) => {
 	const body = await c.req.json();
 
 	const existingUsername = await findUserByUsername(body.username);
@@ -60,9 +66,9 @@ export async function register(c: Context) {
 		},
 		201,
 	);
-}
+});
 
-export async function login(c: Context) {
+app.openapi(loginRoute, async (c) => {
 	const body = await c.req.json();
 
 	const user = await findUserByUsername(body.username);
@@ -90,9 +96,9 @@ export async function login(c: Context) {
 		},
 		200,
 	);
-}
+});
 
-export async function githubAuth(c: Context) {
+app.openapi(githubAuthRoute, async (c) => {
 	const sessions = getCollection("sessions");
 
 	const state = Math.random().toString(36).substring(2);
@@ -110,9 +116,9 @@ export async function githubAuth(c: Context) {
 	url.searchParams.append("scope", "user:email");
 
 	return c.redirect(url.toString(), 302);
-}
+});
 
-export async function githubCallback(c: Context) {
+app.openapi(githubAuthCallbackRoute, async (c) => {
 	const { code, state } = c.req.query();
 
 	const sessions = getCollection("sessions");
@@ -216,9 +222,9 @@ export async function githubCallback(c: Context) {
 		},
 		200,
 	);
-}
+});
 
-export const refreshToken = async (c: Context) => {
+app.openapi(refreshTokenRoute, async (c) => {
 	const body = await c.req.json();
 
 	const refreshToken = body.refreshToken;
@@ -226,7 +232,7 @@ export const refreshToken = async (c: Context) => {
 		return c.json({ error: "Refresh token is required" }, 401);
 	}
 
-	const payload = await verify(refreshToken, JWT_REFRESH_SECRET);
+	const payload = await verifyRefreshToken(refreshToken);
 	if (!payload) {
 		return c.json({ error: "Invalid refresh token" }, 401);
 	}
@@ -252,40 +258,16 @@ export const refreshToken = async (c: Context) => {
 		},
 		200,
 	);
-};
+});
 
-export async function logout(c: Context) {
+app.openapi(logoutRoute, (c) => {
+	// todo: make it for real
 	return c.json(
 		{
 			message: "Logged out successfully",
 		},
 		200,
 	);
-}
+});
 
-export async function getProfile(c: Context) {
-	const user = c.get("user") as User;
-
-	return c.json({
-		username: user.username,
-		email: user.email,
-	});
-}
-
-async function generateJwt(user: User) {
-	const accessTokenPayload: JWTPayload = {
-		username: user.username,
-		email: user.email,
-		exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 mins
-	};
-	const refreshTokenPayload: JWTPayload = {
-		username: user.username,
-		email: user.email,
-		exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 1 week
-	};
-	const [accessToken, refreshToken] = await Promise.all([
-		sign(accessTokenPayload, JWT_SECRET),
-		sign(refreshTokenPayload, JWT_SECRET),
-	]);
-	return { accessToken, refreshToken };
-}
+export default app;

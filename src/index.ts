@@ -1,11 +1,11 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import { connectDB } from "./db/connection";
+import createApp from "./lib/createApp";
 import { errorHandler } from "./middleware/errorHandler";
-import authRoutes from "./routes/auth";
-import protectedRoutes from "./routes/protected";
+import authRoutes from "./routes/auth/auth.index";
+import reportEntriesRoutes from "./routes/reportEntries/reportEntries.index";
 
-const app = new OpenAPIHono();
+const app = createApp();
 
 app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 	type: "http",
@@ -15,7 +15,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 app.onError(errorHandler);
 
 app.route("/auth", authRoutes);
-app.route("/", protectedRoutes);
+app.route("/report-entries", reportEntriesRoutes);
 
 app.get(
 	"/ref",
@@ -34,15 +34,6 @@ app.doc("/doc", {
 			"REST API with authentication via username/password and GitHub OAuth",
 	},
 	openapi: "3.0.0",
-	// components: {
-	// 	securitySchemes: {
-	// 		Bearer: {
-	// 			type: "http",
-	// 			scheme: "bearer",
-	// 			bearerFormat: "JWT",
-	// 		},
-	// 	},
-	// },
 });
 
 connectDB()
