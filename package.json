@@ -4,9 +4,12 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^0.19.1",
+    "@scalar/hono-api-reference": "^0.5.177",
     "hono": "^4.7.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/bun": "latest"
   }
 }
