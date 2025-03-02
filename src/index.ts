@@ -1,32 +1,21 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
+import { connectDB } from "./db/connection";
+import authRoutes from "./routes/auth";
+import protectedRoutes from "./routes/protected";
+import { errorHandler } from "./middleware/errorHandler";
 
 const app = new OpenAPIHono();
 
-app.openapi(
-	createRoute({
-		tags: ["Index", "not index"],
-		method: "get",
-		path: "/",
-		responses: {
-			200: {
-				description: "Respond a message",
-				content: {
-					"application/json": {
-						schema: z.object({
-							message: z.string(),
-						}),
-					},
-				},
-			},
-		},
-	}),
-	(c) => {
-		return c.json({
-			message: "hello",
-		});
-	},
-);
+app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
+	type: "http",
+	scheme: "bearer",
+});
+
+app.onError(errorHandler);
+
+app.route("/auth", authRoutes);
+app.route("/", protectedRoutes);
 
 app.get(
 	"/ref",
@@ -39,11 +28,26 @@ app.get(
 
 app.doc("/doc", {
 	info: {
-		title: "An API",
+		title: "Timecracker API",
 		version: "v1",
+		description:
+			"REST API with authentication via username/password and GitHub OAuth",
 	},
-	openapi: "3.1.0",
+	openapi: "3.0.0",
+	// components: {
+	// 	securitySchemes: {
+	// 		Bearer: {
+	// 			type: "http",
+	// 			scheme: "bearer",
+	// 			bearerFormat: "JWT",
+	// 		},
+	// 	},
+	// },
 });
+
+connectDB()
+	.then(() => console.log("Connected to MongoDB"))
+	.catch((err) => console.error("MongoDB connection error:", err));
 
 export default {
 	port: 3000,
