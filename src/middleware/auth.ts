@@ -1,9 +1,9 @@
 import type { Context, Next } from "hono";
+import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { verify } from "hono/jwt";
-import { findUserByUsername } from "../models/user";
 import type { JWTPayload } from "hono/utils/jwt/types";
-import { createMiddleware } from "hono/factory";
+import { findUserByUsername } from "../models/user";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
 

@@ -1,9 +1,9 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import { connectDB } from "./db/connection";
+import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth";
 import protectedRoutes from "./routes/protected";
-import { errorHandler } from "./middleware/errorHandler";
 
 const app = new OpenAPIHono();
 

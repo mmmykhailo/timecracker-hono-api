@@ -1,11 +1,11 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
-	register,
-	login,
 	githubAuth,
 	githubCallback,
+	login,
 	logout,
 	refreshToken,
+	register,
 } from "../controllers/auth";
 
 const loginSchema = z.object({

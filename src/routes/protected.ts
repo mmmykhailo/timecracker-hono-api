@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { authMiddleware } from "../middleware/auth";
 import { getProfile } from "../controllers/auth";
+import { authMiddleware } from "../middleware/auth";
 
 const app = new OpenAPIHono();
 

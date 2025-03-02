@@ -1,5 +1,5 @@
+import type { ObjectId } from "mongodb";
 import { getCollection } from "../db/connection";
-import type { ObjectId, WithId } from "mongodb";
 
 export type User = {
 	_id: ObjectId;

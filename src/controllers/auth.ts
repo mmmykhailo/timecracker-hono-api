@@ -1,19 +1,19 @@
 import type { Context } from "hono";
-import { sign, verify } from "hono/jwt";
 import { HTTPException } from "hono/http-exception";
+import { sign, verify } from "hono/jwt";
+import type { JWTPayload } from "hono/utils/jwt/types";
+import { getCollection } from "../db/connection";
 import {
-	findUserByUsername,
+	type User,
+	createUser,
 	findUserByEmail,
 	findUserByGithubId,
-	createUser,
-	validatePassword,
-	hashPassword,
-	type User,
 	findUserByRefreshToken,
+	findUserByUsername,
+	hashPassword,
 	updateUserRefreshToken,
+	validatePassword,
 } from "../models/user";
-import { getCollection } from "../db/connection";
-import type { JWTPayload } from "hono/utils/jwt/types";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-secret";
