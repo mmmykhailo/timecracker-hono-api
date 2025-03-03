@@ -127,6 +127,7 @@ export const githubAuthCallbackRoute = createRoute({
 		query: z.object({
 			code: z.string(),
 			state: z.string(),
+			redirect_uri: z.string(),
 		}),
 	},
 	responses: {
