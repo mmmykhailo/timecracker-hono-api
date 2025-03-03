@@ -1,6 +1,6 @@
 import { apiReference } from "@scalar/hono-api-reference";
-import { connectDB } from "./db/connection";
 import createApp from "./lib/createApp";
+import { connectDatabase } from "./lib/db";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth/auth.index";
 import reportEntriesRoutes from "./routes/reportEntries/reportEntries.index";
@@ -36,7 +36,7 @@ app.doc("/doc", {
 	openapi: "3.0.0",
 });
 
-connectDB()
+connectDatabase()
 	.then(() => console.log("Connected to MongoDB"))
 	.catch((err) => console.error("MongoDB connection error:", err));
 

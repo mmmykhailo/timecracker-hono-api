@@ -5,9 +5,9 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/api";
 const client = new MongoClient(MONGODB_URI);
 let dbInstance: Db | null = null;
 
-export type DbCollection = "users" | "reportEntries";
+export type DbCollection = "users" | "sessions" | "reportEntries";
 
-export async function connectDB() {
+export async function connectDatabase() {
 	try {
 		await client.connect();
 		dbInstance = client.db();
@@ -18,13 +18,13 @@ export async function connectDB() {
 	}
 }
 
-export function getDB() {
+export function getDatabase() {
 	if (!dbInstance) {
-		throw new Error("Database not initialized. Call connectDB first");
+		throw new Error("Database not initialized. Call connectDatabase first");
 	}
 	return dbInstance;
 }
 
-export function getCollection<T extends Document>(name: string) {
-	return getDB().collection<T>(name);
+export function getCollection<T extends Document>(name: DbCollection) {
+	return getDatabase().collection<T>(name);
 }

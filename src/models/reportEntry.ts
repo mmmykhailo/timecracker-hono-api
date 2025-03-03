@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { ObjectId } from "mongodb";
-import { getCollection } from "../db/connection";
+import { getCollection } from "../lib/db";
 
 export const reportEntrySchema = z.object({
 	_id: z.instanceof(ObjectId),

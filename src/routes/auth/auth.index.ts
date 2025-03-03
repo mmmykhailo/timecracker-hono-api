@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
-import { getCollection } from "../../db/connection";
 import createApp from "../../lib/createApp";
+import { getCollection } from "../../lib/db";
 import { generateJwt, verifyRefreshToken } from "../../lib/jwt";
 import {
 	createUser,
