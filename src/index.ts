@@ -1,4 +1,5 @@
 import { apiReference } from "@scalar/hono-api-reference";
+import { cors } from "hono/cors";
 import createApp from "./lib/createApp";
 import { connectDatabase } from "./lib/db";
 import { errorHandler } from "./middleware/errorHandler";
@@ -7,6 +8,7 @@ import reportEntriesRoutes from "./routes/reportEntries/reportEntries.index";
 
 const app = createApp();
 
+app.use(cors());
 app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 	type: "http",
 	scheme: "bearer",
