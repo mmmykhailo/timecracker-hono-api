@@ -102,6 +102,11 @@ export const githubAuthRoute = createRoute({
 	tags: ["Auth"],
 	method: "get",
 	path: "/github",
+	request: {
+		query: z.object({
+			redirect_uri: z.string(),
+		}),
+	},
 	responses: {
 		200: {
 			description: "GitHub authorize URL",
