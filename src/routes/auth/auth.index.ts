@@ -25,8 +25,6 @@ const GITHUB_CLIENT_ID =
 	process.env.GITHUB_CLIENT_ID || "your-github-client-id";
 const GITHUB_CLIENT_SECRET =
 	process.env.GITHUB_CLIENT_SECRET || "your-github-client-secret";
-const REDIRECT_URI =
-	process.env.REDIRECT_URI || "http://localhost:3000/auth/github/callback";
 
 const app = createApp();
 
@@ -99,6 +97,8 @@ app.openapi(loginRoute, async (c) => {
 });
 
 app.openapi(githubAuthRoute, async (c) => {
+	const { redirect_uri } = c.req.query();
+
 	const sessions = getCollection("sessions");
 
 	const state = Math.random().toString(36).substring(2);
@@ -111,15 +111,15 @@ app.openapi(githubAuthRoute, async (c) => {
 
 	const url = new URL("https://github.com/login/oauth/authorize");
 	url.searchParams.append("client_id", GITHUB_CLIENT_ID);
-	url.searchParams.append("redirect_uri", REDIRECT_URI);
+	url.searchParams.append("redirect_uri", redirect_uri);
 	url.searchParams.append("state", state);
 	url.searchParams.append("scope", "user:email");
 
-	return c.redirect(url.toString(), 302);
+	return c.json({ url: url.toString() }, 200);
 });
 
 app.openapi(githubAuthCallbackRoute, async (c) => {
-	const { code, state } = c.req.query();
+	const { code, state, redirect_uri } = c.req.query();
 
 	const sessions = getCollection("sessions");
 	const session = await sessions.findOne({ state });
@@ -142,7 +142,7 @@ app.openapi(githubAuthCallbackRoute, async (c) => {
 				client_id: GITHUB_CLIENT_ID,
 				client_secret: GITHUB_CLIENT_SECRET,
 				code,
-				redirect_uri: REDIRECT_URI,
+				redirect_uri: redirect_uri,
 			}),
 		},
 	);

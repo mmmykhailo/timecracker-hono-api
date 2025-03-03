@@ -11,6 +11,10 @@ const loginSchema = z.object({
 	password: z.string().min(6),
 });
 
+const githubAuthorizeUrlSchema = z.object({
+	url: z.string(),
+});
+
 const tokenResponseSchema = z.object({
 	accessToken: z.string(),
 	refreshToken: z.string(),
@@ -99,8 +103,13 @@ export const githubAuthRoute = createRoute({
 	method: "get",
 	path: "/github",
 	responses: {
-		302: {
-			description: "Redirect to GitHub",
+		200: {
+			description: "GitHub authorize URL",
+			content: {
+				"application/json": {
+					schema: githubAuthorizeUrlSchema,
+				},
+			},
 		},
 	},
 });
