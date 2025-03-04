@@ -13,8 +13,7 @@ export const getReportsRoute = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
-						reportEntries: z.array(reportSchema),
-						email: z.string(),
+						reports: z.array(reportSchema),
 					}),
 				},
 			},
