@@ -11,6 +11,11 @@ export async function connectDatabase() {
 	try {
 		await client.connect();
 		dbInstance = client.db();
+
+		await dbInstance
+			.collection("reports")
+			.createIndex({ ownerId: 1, date: 1 }, { unique: true });
+
 		return dbInstance;
 	} catch (error) {
 		console.error("Database connection error:", error);
