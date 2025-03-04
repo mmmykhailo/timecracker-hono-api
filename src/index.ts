@@ -4,7 +4,7 @@ import createApp from "./lib/createApp";
 import { connectDatabase } from "./lib/db";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth/auth.index";
-import reportEntriesRoutes from "./routes/reportEntries/reportEntries.index";
+import reportsRoutes from "./routes/reports/reports.index";
 
 const app = createApp();
 
@@ -17,7 +17,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 app.onError(errorHandler);
 
 app.route("/auth", authRoutes);
-app.route("/report-entries", reportEntriesRoutes);
+app.route("/reports", reportsRoutes);
 
 app.get(
 	"/ref",

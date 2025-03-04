@@ -5,7 +5,7 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/api";
 const client = new MongoClient(MONGODB_URI);
 let dbInstance: Db | null = null;
 
-export type DbCollection = "users" | "sessions" | "reportEntries";
+export type DbCollection = "users" | "sessions" | "reports";
 
 export async function connectDatabase() {
 	try {
