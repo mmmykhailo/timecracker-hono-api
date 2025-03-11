@@ -30,6 +30,7 @@ export const getReportByDateRoute = createRoute({
 	tags: ["Reports"],
 	summary: "Current user report by date",
 	method: "get",
+	operationId: "getReportByDate",
 	path: "/date/:date",
 	security: [{ Bearer: [] }],
 	responses: {
