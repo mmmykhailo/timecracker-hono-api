@@ -101,7 +101,7 @@ export async function findReportsByOwner(
 export async function findReportsByOwnerAndDate(
 	ownerId: ObjectId,
 	date: string,
-): Promise<Array<Report>> {
+): Promise<Report | null> {
 	const users = getCollection<Report>("reports");
-	return await users.find({ date, ownerId }).toArray();
+	return await users.findOne({ date, ownerId });
 }
