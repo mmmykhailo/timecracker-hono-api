@@ -15,7 +15,7 @@ const githubAuthorizeUrlSchema = z.object({
 	url: z.string(),
 });
 
-const tokenResponseSchema = z.object({
+export const tokenResponseSchema = z.object({
 	accessToken: z.string(),
 	refreshToken: z.string(),
 	user: z.object({

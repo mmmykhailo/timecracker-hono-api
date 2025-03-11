@@ -1,3 +1,4 @@
+import type { z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import createApp from "../../lib/createApp";
 import { getCollection } from "../../lib/db";
@@ -19,6 +20,7 @@ import {
 	logoutRoute,
 	refreshTokenRoute,
 	registerRoute,
+	type tokenResponseSchema,
 } from "./auth.routes";
 
 const GITHUB_CLIENT_ID =
@@ -61,7 +63,7 @@ app.openapi(registerRoute, async (c) => {
 				username: user.username,
 				email: user.email,
 			},
-		},
+		} satisfies z.infer<typeof tokenResponseSchema>,
 		201,
 	);
 });
@@ -91,7 +93,7 @@ app.openapi(loginRoute, async (c) => {
 				username: user.username,
 				email: user.email,
 			},
-		},
+		} satisfies z.infer<typeof tokenResponseSchema>,
 		200,
 	);
 });
