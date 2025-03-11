@@ -2,11 +2,13 @@ import createApp from "../../lib/createApp";
 import {
 	type UnownedReportData,
 	findReportsByOwner,
+	findReportsByOwnerAndDate,
 	insertReport,
 	updateReportByIdAndOwnerId,
 } from "../../models/report";
 import type { User } from "../../models/user";
 import {
+	getReportByDateRoute,
 	getReportsRoute,
 	patchReportRoute,
 	postReportRoute,
@@ -21,6 +23,17 @@ app.openapi(getReportsRoute, async (c) => {
 
 	return c.json({
 		reports,
+	});
+});
+
+app.openapi(getReportByDateRoute, async (c) => {
+	const user = c.get("user") as User;
+	const date = c.req.param("date");
+
+	const report = await findReportsByOwnerAndDate(user._id, date);
+
+	return c.json({
+		report,
 	});
 });
 
