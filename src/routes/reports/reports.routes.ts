@@ -31,8 +31,13 @@ export const getReportByDateRoute = createRoute({
 	summary: "Current user report by date",
 	method: "get",
 	operationId: "getReportByDate",
-	path: "/date/:date",
+	path: "/date/{date}",
 	security: [{ Bearer: [] }],
+	request: {
+		params: z.object({
+			date: z.string(),
+		}),
+	},
 	responses: {
 		200: {
 			description: "Get report for current user by date",
