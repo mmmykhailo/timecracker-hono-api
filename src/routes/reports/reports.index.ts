@@ -17,8 +17,6 @@ const app = createApp();
 app.openapi(getReportsRoute, async (c) => {
 	const user = c.get("user") as User;
 
-	console.log(user._id);
-
 	const reports = await findReportsByOwner(user._id);
 
 	return c.json({
