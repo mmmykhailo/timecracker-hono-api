@@ -21,8 +21,8 @@ export const reportEntrySchema = z
 
 export const reportSchema = z
 	.object({
-		_id: z.instanceof(ObjectId),
-		ownerId: z.instanceof(ObjectId),
+		_id: z.instanceof(ObjectId).openapi({ type: "string" }),
+		ownerId: z.instanceof(ObjectId).openapi({ type: "string" }),
 		date: z.string().regex(/^\d{8}$/, "Invalid date format. Expected yyyyMMdd"),
 		entries: z.array(reportEntrySchema),
 	})
