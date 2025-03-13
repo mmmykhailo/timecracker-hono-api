@@ -25,39 +25,33 @@ export const reportSchema = z
 		ownerId: z.instanceof(ObjectId),
 		date: z.string().regex(/^\d{8}$/, "Invalid date format. Expected yyyyMMdd"),
 		entries: z.array(reportEntrySchema),
-		createdAt: z.date(),
-		updatedAt: z.date(),
 	})
 	.openapi("Report");
 
-export const reportEntryDataSchema = reportSchema.omit({
+export const reportDataSchema = reportSchema.omit({
 	_id: true,
-	createdAt: true,
-	updatedAt: true,
 });
-export const unownedReportDataSchema = reportEntryDataSchema
+export const unownedReportDataSchema = reportDataSchema
 	.omit({
 		ownerId: true,
 	})
 	.openapi("UnownedReportData");
 
 export type Report = z.infer<typeof reportSchema>;
-export type ReportData = z.infer<typeof reportEntryDataSchema>;
+export type ReportData = z.infer<typeof reportDataSchema>;
 export type UnownedReportData = z.infer<typeof unownedReportDataSchema>;
 
-export type NewReport = ReportData & Pick<Report, "createdAt" | "updatedAt">;
-
-export async function insertReport(reportData: ReportData): Promise<Report> {
+export async function insertReport({
+	reportData,
+}: { reportData: ReportData }): Promise<Report> {
 	const reports = getCollection("reports");
 
 	const now = new Date();
 
-	const newReport: NewReport = {
+	const newReport: ReportData = {
 		ownerId: reportData.ownerId,
 		date: reportData.date,
 		entries: reportData.entries,
-		createdAt: now,
-		updatedAt: now,
 	};
 
 	const result = await reports.insertOne(newReport);
@@ -68,40 +62,66 @@ export async function insertReport(reportData: ReportData): Promise<Report> {
 	return report;
 }
 
-export async function updateReportByIdAndOwnerId(
-	id: string | ObjectId,
-	ownerId: string | ObjectId,
-	reportData: UnownedReportData,
-) {
+export async function upsertReportByIdAndOwnerId({
+	id,
+	ownerId,
+	reportData,
+}: {
+	id: string | ObjectId;
+	ownerId: string | ObjectId;
+	reportData: UnownedReportData;
+}) {
 	const reports = getCollection<Report>("reports");
-
-	const now = new Date();
 
 	const result = await reports.findOneAndUpdate(
 		{ _id: new ObjectId(id), ownerId: new ObjectId(ownerId) },
 		{
 			$set: {
-				...reportData,
-				updatedAt: now,
+				entries: reportData.entries,
+				date: reportData.date,
 			},
 		},
-		{ returnDocument: "after" },
+		{ returnDocument: "after", upsert: true },
 	);
 
 	return result;
 }
 
-export async function findReportsByOwner(
-	ownerId: ObjectId,
-): Promise<Array<Report>> {
+export async function upsertReportByDateAndOwnerId({
+	dateStr,
+	ownerId,
+	reportData,
+}: {
+	dateStr: string;
+	ownerId: string | ObjectId;
+	reportData: Omit<UnownedReportData, "date">;
+}) {
+	const reports = getCollection<Report>("reports");
+
+	const result = await reports.findOneAndUpdate(
+		{ date: dateStr, ownerId: new ObjectId(ownerId) },
+		{
+			$set: {
+				entries: reportData.entries,
+			},
+		},
+		{ returnDocument: "after", upsert: true },
+	);
+
+	return result;
+}
+
+export async function findReportsByOwner({
+	ownerId,
+}: { ownerId: ObjectId }): Promise<Array<Report>> {
 	const users = getCollection<Report>("reports");
 	return await users.find({ ownerId }).toArray();
 }
 
-export async function findReportsByOwnerAndDate(
-	ownerId: ObjectId,
-	date: string,
-): Promise<Report | null> {
+export async function findReportsByDateAndOwnerId({
+	date,
+	ownerId,
+}: { date: string; ownerId: ObjectId }): Promise<Report | null> {
 	const users = getCollection<Report>("reports");
 	return await users.findOne({ date, ownerId });
 }

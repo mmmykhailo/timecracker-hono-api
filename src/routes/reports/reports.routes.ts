@@ -4,7 +4,7 @@ import { reportSchema, unownedReportDataSchema } from "../../models/report";
 
 export const getReportsRoute = createRoute({
 	tags: ["Reports"],
-	summary: "Current user reports",
+	summary: "All user reports",
 	method: "get",
 	path: "/",
 	security: [{ Bearer: [] }],
@@ -28,7 +28,7 @@ export const getReportsRoute = createRoute({
 
 export const getReportByDateRoute = createRoute({
 	tags: ["Reports"],
-	summary: "Current user report by date",
+	summary: "Report by date",
 	method: "get",
 	operationId: "getReportByDate",
 	path: "/date/{date}",
@@ -40,7 +40,45 @@ export const getReportByDateRoute = createRoute({
 	},
 	responses: {
 		200: {
-			description: "Get report for current user by date",
+			description: "Get report by date",
+			content: {
+				"application/json": {
+					schema: z.object({
+						report: reportSchema,
+					}),
+				},
+			},
+		},
+		401: {
+			description: "Unauthorized",
+		},
+	},
+	middleware: authMiddleware,
+});
+
+export const putReportByDateRoute = createRoute({
+	tags: ["Reports"],
+	summary: "Put report by date",
+	method: "put",
+	operationId: "getReportByDate",
+	path: "/date/{date}",
+	security: [{ Bearer: [] }],
+	request: {
+		params: z.object({
+			date: z.string(),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: unownedReportDataSchema.omit({ date: true }),
+				},
+			},
+			required: true,
+		},
+	},
+	responses: {
+		200: {
+			description: "Put report by date",
 			content: {
 				"application/json": {
 					schema: z.object({
@@ -90,10 +128,10 @@ export const postReportRoute = createRoute({
 	middleware: authMiddleware,
 });
 
-export const patchReportRoute = createRoute({
+export const putReportRoute = createRoute({
 	tags: ["Reports"],
-	summary: "Patch report",
-	method: "patch",
+	summary: "Put report",
+	method: "put",
 	path: "/{id}",
 	security: [{ Bearer: [] }],
 	request: {
@@ -111,7 +149,7 @@ export const patchReportRoute = createRoute({
 	},
 	responses: {
 		201: {
-			description: "Patch report",
+			description: "Put report",
 			content: {
 				"application/json": {
 					schema: z.object({
