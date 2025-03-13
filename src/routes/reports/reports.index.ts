@@ -4,8 +4,8 @@ import {
 	findReportsByDateAndOwnerId,
 	findReportsByOwner,
 	insertReport,
+	updateReportByIdAndOwnerId,
 	upsertReportByDateAndOwnerId,
-	upsertReportByIdAndOwnerId,
 } from "../../models/report";
 import type { User } from "../../models/user";
 import {
@@ -82,7 +82,7 @@ app.openapi(putReportRoute, async (c) => {
 
 	const unowwnedReportData = await c.req.json<UnownedReportData>();
 
-	const report = await upsertReportByIdAndOwnerId({
+	const report = await updateReportByIdAndOwnerId({
 		id: id,
 		ownerId: user._id,
 		reportData: {

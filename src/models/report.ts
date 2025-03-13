@@ -46,8 +46,6 @@ export async function insertReport({
 }: { reportData: ReportData }): Promise<Report> {
 	const reports = getCollection("reports");
 
-	const now = new Date();
-
 	const newReport: ReportData = {
 		ownerId: reportData.ownerId,
 		date: reportData.date,
@@ -62,7 +60,7 @@ export async function insertReport({
 	return report;
 }
 
-export async function upsertReportByIdAndOwnerId({
+export async function updateReportByIdAndOwnerId({
 	id,
 	ownerId,
 	reportData,
@@ -81,7 +79,7 @@ export async function upsertReportByIdAndOwnerId({
 				date: reportData.date,
 			},
 		},
-		{ returnDocument: "after", upsert: true },
+		{ returnDocument: "after" },
 	);
 
 	return result;
