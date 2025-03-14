@@ -12,7 +12,7 @@ export const authMiddleware = createMiddleware(
 		try {
 			let token: string | undefined;
 
-			const authHeader = c.req.header("Authorization");
+			const authHeader = c.req.header("authorization");
 			if (authHeader?.startsWith("Bearer ")) {
 				token = authHeader.substring(7);
 			}
