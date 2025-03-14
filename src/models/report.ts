@@ -1,6 +1,7 @@
 import { z } from "@hono/zod-openapi";
 import { ObjectId } from "mongodb";
 import { getCollection } from "../lib/db";
+import { parseTimeIntoMinutes } from "../lib/time-strings";
 
 export const reportEntrySchema = z
 	.object({
@@ -17,6 +18,13 @@ export const reportEntrySchema = z
 		activity: z.string().nullable(),
 		description: z.string(),
 	})
+	.refine(
+		(report) =>
+			report.duration ===
+			parseTimeIntoMinutes(report.time.end) -
+				parseTimeIntoMinutes(report.time.start),
+		"Incorrect duration",
+	)
 	.openapi("ReportEntry");
 
 export const reportSchema = z
