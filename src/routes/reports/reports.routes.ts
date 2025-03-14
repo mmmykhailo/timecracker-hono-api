@@ -60,7 +60,7 @@ export const putReportByDateRoute = createRoute({
 	tags: ["Reports"],
 	summary: "Put report by date",
 	method: "put",
-	operationId: "getReportByDate",
+	operationId: "putReportByDate",
 	path: "/date/{date}",
 	security: [{ Bearer: [] }],
 	request: {
@@ -133,6 +133,7 @@ export const putReportRoute = createRoute({
 	summary: "Put report",
 	method: "put",
 	path: "/{id}",
+	operationId: "putReportById",
 	security: [{ Bearer: [] }],
 	request: {
 		params: z.object({
