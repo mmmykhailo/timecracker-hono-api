@@ -231,17 +231,17 @@ app.openapi(refreshTokenRoute, async (c) => {
 
 	const refreshToken = body.refreshToken;
 	if (!refreshToken) {
-		return c.json({ error: "Refresh token is required" }, 401);
+		return c.json({ message: "Refresh token is required" }, 401);
 	}
 
 	const payload = await verifyRefreshToken(refreshToken);
 	if (!payload) {
-		return c.json({ error: "Invalid refresh token" }, 401);
+		return c.json({ message: "Invalid refresh token" }, 401);
 	}
 
 	const user = await findUserByRefreshToken(refreshToken);
 	if (!user) {
-		return c.json({ error: "User not found or token revoked" }, 401);
+		return c.json({ message: "User not found or token revoked" }, 401);
 	}
 
 	const { accessToken: newAccessToken, refreshToken: newRefreshToken } =

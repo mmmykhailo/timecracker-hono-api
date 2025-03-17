@@ -29,7 +29,7 @@ const refreshTokenSchema = z.object({
 });
 
 const errorResponseSchema = z.object({
-	error: z.string().optional(),
+	message: z.string().optional(),
 });
 
 export const registerRoute = createRoute({
