@@ -247,7 +247,7 @@ app.openapi(refreshTokenRoute, async (c) => {
 	const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
 		await generateJwt(user);
 
-	await updateUserRefreshToken(user._id, refreshToken);
+	await updateUserRefreshToken(user._id, newRefreshToken);
 
 	return c.json(
 		{
