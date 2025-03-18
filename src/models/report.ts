@@ -18,13 +18,6 @@ export const reportEntrySchema = z
 		activity: z.string().nullable(),
 		description: z.string(),
 	})
-	.refine(
-		(report) =>
-			report.duration ===
-			parseTimeIntoMinutes(report.time.end) -
-				parseTimeIntoMinutes(report.time.start),
-		"Incorrect duration",
-	)
 	.openapi("ReportEntry");
 
 export const reportSchema = z
@@ -32,13 +25,19 @@ export const reportSchema = z
 		_id: z.instanceof(ObjectId).openapi({ type: "string" }),
 		ownerId: z.instanceof(ObjectId).openapi({ type: "string" }),
 		date: z.string().regex(/^\d{8}$/, "Invalid date format. Expected yyyyMMdd"),
+		duration: z.number().int().min(0),
 		entries: z.array(reportEntrySchema),
 	})
 	.openapi("Report");
 
-export const reportDataSchema = reportSchema.omit({
-	_id: true,
-});
+export const reportDataSchema = reportSchema
+	.omit({
+		_id: true,
+		duration: true,
+	})
+	.extend({
+		entries: z.array(reportEntrySchema.omit({ duration: true })),
+	});
 export const unownedReportDataSchema = reportDataSchema
 	.omit({
 		ownerId: true,
@@ -54,11 +53,7 @@ export async function insertReport({
 }: { reportData: ReportData }): Promise<Report> {
 	const reports = getCollection("reports");
 
-	const newReport: ReportData = {
-		ownerId: reportData.ownerId,
-		date: reportData.date,
-		entries: reportData.entries,
-	};
+	const newReport = refineReportDuration(reportData);
 
 	const result = await reports.insertOne(newReport);
 	const report: Report = {
@@ -83,8 +78,7 @@ export async function updateReportByIdAndOwnerId({
 		{ _id: new ObjectId(id), ownerId: new ObjectId(ownerId) },
 		{
 			$set: {
-				entries: reportData.entries,
-				date: reportData.date,
+				...refineReportDuration(reportData),
 			},
 		},
 		{ returnDocument: "after" },
@@ -108,7 +102,7 @@ export async function upsertReportByDateAndOwnerId({
 		{ date: dateStr, ownerId: new ObjectId(ownerId) },
 		{
 			$set: {
-				entries: reportData.entries,
+				...refineReportDuration(reportData),
 			},
 		},
 		{ returnDocument: "after", upsert: true },
@@ -130,4 +124,28 @@ export async function findReportsByDateAndOwnerId({
 }: { date: string; ownerId: ObjectId }): Promise<Report | null> {
 	const users = getCollection<Report>("reports");
 	return await users.findOne({ date, ownerId });
+}
+
+function refineReportDuration<
+	T extends ReportData | UnownedReportData | Omit<UnownedReportData, "date">,
+>(reportData: T) {
+	let reportDuration = 0;
+	const entries = reportData.entries.map((entry) => {
+		const entryDuration =
+			parseTimeIntoMinutes(entry.time.end) -
+			parseTimeIntoMinutes(entry.time.start);
+
+		reportDuration += entryDuration;
+
+		return {
+			...entry,
+			duration: entryDuration,
+		};
+	});
+
+	return {
+		...reportData,
+		duration: reportDuration,
+		entries: entries,
+	};
 }

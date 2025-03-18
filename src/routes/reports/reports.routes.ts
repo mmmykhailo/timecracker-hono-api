@@ -142,7 +142,7 @@ export const putReportRoute = createRoute({
 		body: {
 			content: {
 				"application/json": {
-					schema: unownedReportDataSchema.partial(),
+					schema: unownedReportDataSchema,
 				},
 			},
 			required: true,
