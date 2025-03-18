@@ -1,4 +1,6 @@
+import { startOfDay } from "date-fns";
 import createApp from "../../lib/createApp";
+import { parseDateString } from "../../lib/date-strings";
 import {
 	type UnownedReportData,
 	findReportsByDateAndOwnerId,
@@ -30,10 +32,10 @@ app.openapi(getReportsRoute, async (c) => {
 
 app.openapi(getReportByDateRoute, async (c) => {
 	const user = c.get("user") as User;
-	const date = c.req.param("date");
+	const dateStr = c.req.param("date");
 
 	const report = await findReportsByDateAndOwnerId({
-		date: date,
+		date: startOfDay(parseDateString(dateStr)),
 		ownerId: user._id,
 	});
 
@@ -44,14 +46,14 @@ app.openapi(getReportByDateRoute, async (c) => {
 
 app.openapi(putReportByDateRoute, async (c) => {
 	const user = c.get("user") as User;
-	const date = c.req.param("date");
+	const dateStr = c.req.param("date");
 
-	const unowwnedReportData = await c.req.json<UnownedReportData>();
+	const unownedReportData = await c.req.json<UnownedReportData>();
 
 	const report = await upsertReportByDateAndOwnerId({
-		dateStr: date,
+		date: startOfDay(parseDateString(dateStr)),
 		ownerId: user._id,
-		reportData: unowwnedReportData,
+		reportData: unownedReportData,
 	});
 
 	return c.json({
@@ -67,6 +69,7 @@ app.openapi(postReportRoute, async (c) => {
 	const report = await insertReport({
 		reportData: {
 			...unowwnedReportData,
+			date: startOfDay(unowwnedReportData.date),
 			ownerId: user._id,
 		},
 	});

@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { ObjectId } from "mongodb";
+import { startOfDay } from "../lib/date-utils";
 import { getCollection } from "../lib/db";
 import { parseTimeIntoMinutes } from "../lib/time-strings";
 
@@ -24,7 +25,7 @@ export const reportSchema = z
 	.object({
 		_id: z.instanceof(ObjectId).openapi({ type: "string" }),
 		ownerId: z.instanceof(ObjectId).openapi({ type: "string" }),
-		date: z.string().regex(/^\d{8}$/, "Invalid date format. Expected yyyyMMdd"),
+		date: z.string().transform((str) => new Date(str)),
 		duration: z.number().int().min(0),
 		entries: z.array(reportEntrySchema),
 	})
@@ -88,21 +89,22 @@ export async function updateReportByIdAndOwnerId({
 }
 
 export async function upsertReportByDateAndOwnerId({
-	dateStr,
+	date,
 	ownerId,
 	reportData,
 }: {
-	dateStr: string;
+	date: Date;
 	ownerId: string | ObjectId;
 	reportData: Omit<UnownedReportData, "date">;
 }) {
 	const reports = getCollection<Report>("reports");
 
 	const result = await reports.findOneAndUpdate(
-		{ date: dateStr, ownerId: new ObjectId(ownerId) },
+		{ date: startOfDay(date), ownerId: new ObjectId(ownerId) },
 		{
 			$set: {
 				...refineReportDuration(reportData),
+				date: startOfDay(date),
 			},
 		},
 		{ returnDocument: "after", upsert: true },
@@ -121,9 +123,12 @@ export async function findReportsByOwner({
 export async function findReportsByDateAndOwnerId({
 	date,
 	ownerId,
-}: { date: string; ownerId: ObjectId }): Promise<Report | null> {
+}: { date: Date; ownerId: ObjectId }): Promise<Report | null> {
 	const users = getCollection<Report>("reports");
-	return await users.findOne({ date, ownerId });
+	return await users.findOne({
+		date: startOfDay(date),
+		ownerId: ownerId,
+	});
 }
 
 function refineReportDuration<
