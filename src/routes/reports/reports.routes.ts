@@ -165,3 +165,40 @@ export const putReportRoute = createRoute({
 	},
 	middleware: authMiddleware,
 });
+
+export const getDailyDurationsRoute = createRoute({
+	tags: ["Reports"],
+	summary: "Daily durations",
+	method: "get",
+	path: "/daily-durations",
+	security: [{ Bearer: [] }],
+	request: {
+		query: z.object({
+			from: z.string().transform((str) => new Date(str)),
+			to: z.string().transform((str) => new Date(str)),
+		}),
+	},
+	responses: {
+		200: {
+			description: "Get daily durations",
+			content: {
+				"application/json": {
+					schema: z.object({
+						dailyDurations: z
+							.record(z.string(), z.number().int().min(0))
+							.openapi({
+								example: {
+									"20250319": 360,
+									"20250320": 30,
+								},
+							}),
+					}),
+				},
+			},
+		},
+		401: {
+			description: "Unauthorized",
+		},
+	},
+	middleware: authMiddleware,
+});

@@ -3,6 +3,7 @@ import createApp from "../../lib/createApp";
 import { parseDateString } from "../../lib/date-strings";
 import {
 	type UnownedReportData,
+	findDailyDurationsByOwner,
 	findReportsByDateAndOwnerId,
 	findReportsByOwner,
 	insertReport,
@@ -11,6 +12,7 @@ import {
 } from "../../models/report";
 import type { User } from "../../models/user";
 import {
+	getDailyDurationsRoute,
 	getReportByDateRoute,
 	getReportsRoute,
 	postReportRoute,
@@ -64,12 +66,12 @@ app.openapi(putReportByDateRoute, async (c) => {
 app.openapi(postReportRoute, async (c) => {
 	const user = c.get("user") as User;
 
-	const unowwnedReportData = await c.req.json<UnownedReportData>();
+	const unownedReportData = await c.req.json<UnownedReportData>();
 
 	const report = await insertReport({
 		reportData: {
-			...unowwnedReportData,
-			date: startOfDay(unowwnedReportData.date),
+			...unownedReportData,
+			date: startOfDay(unownedReportData.date),
 			ownerId: user._id,
 		},
 	});
@@ -83,18 +85,33 @@ app.openapi(putReportRoute, async (c) => {
 	const { id } = c.req.valid("param");
 	const user = c.get("user") as User;
 
-	const unowwnedReportData = await c.req.json<UnownedReportData>();
+	const unownedReportData = await c.req.json<UnownedReportData>();
 
 	const report = await updateReportByIdAndOwnerId({
 		id: id,
 		ownerId: user._id,
 		reportData: {
-			...unowwnedReportData,
+			...unownedReportData,
 		},
 	});
 
 	return c.json({
 		report,
+	});
+});
+
+app.openapi(getDailyDurationsRoute, async (c) => {
+	const { from, to } = c.req.query();
+	const user = c.get("user") as User;
+
+	const dailyDurations = await findDailyDurationsByOwner({
+		ownerId: user._id,
+		from: startOfDay(new Date(from)),
+		to: startOfDay(new Date(to)),
+	});
+
+	return c.json({
+		dailyDurations,
 	});
 });
 

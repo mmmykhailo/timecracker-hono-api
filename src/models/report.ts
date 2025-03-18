@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { ObjectId } from "mongodb";
+import { formatDateString } from "../lib/date-strings";
 import { startOfDay } from "../lib/date-utils";
 import { getCollection } from "../lib/db";
 import { parseTimeIntoMinutes } from "../lib/time-strings";
@@ -116,16 +117,16 @@ export async function upsertReportByDateAndOwnerId({
 export async function findReportsByOwner({
 	ownerId,
 }: { ownerId: ObjectId }): Promise<Array<Report>> {
-	const users = getCollection<Report>("reports");
-	return await users.find({ ownerId }).toArray();
+	const reports = getCollection<Report>("reports");
+	return await reports.find({ ownerId }).toArray();
 }
 
 export async function findReportsByDateAndOwnerId({
 	date,
 	ownerId,
 }: { date: Date; ownerId: ObjectId }): Promise<Report | null> {
-	const users = getCollection<Report>("reports");
-	return await users.findOne({
+	const reports = getCollection<Report>("reports");
+	return await reports.findOne({
 		date: startOfDay(date),
 		ownerId: ownerId,
 	});
@@ -153,4 +154,34 @@ function refineReportDuration<
 		duration: reportDuration,
 		entries: entries,
 	};
+}
+
+export async function findDailyDurationsByOwner({
+	ownerId,
+	from,
+	to,
+}: { ownerId: ObjectId; from: Date; to: Date }) {
+	const users = getCollection<Report>("reports");
+	const durationsArray = await users
+		.find({
+			ownerId,
+			date: {
+				$gte: from,
+				$lte: to,
+			},
+		})
+		.project<Pick<Report, "date" | "duration">>({
+			_id: 0,
+			date: 1,
+			duration: 1,
+		})
+		.toArray();
+
+	const dailyDurations: Record<string, number> = {};
+
+	for (const item of durationsArray) {
+		dailyDurations[formatDateString(item.date)] = item.duration;
+	}
+
+	return dailyDurations;
 }
