@@ -1,6 +1,6 @@
-import { startOfDay } from "date-fns";
 import createApp from "../../lib/createApp";
 import { parseDateString } from "../../lib/date-strings";
+import { endOfDay, startOfDay } from "../../lib/date-utils";
 import {
 	type UnownedReportData,
 	findDailyDurationsByOwner,
@@ -106,8 +106,8 @@ app.openapi(getDailyDurationsRoute, async (c) => {
 
 	const dailyDurations = await findDailyDurationsByOwner({
 		ownerId: user._id,
-		from: startOfDay(new Date(from)),
-		to: startOfDay(new Date(to)),
+		from: startOfDay(parseDateString(from)),
+		to: endOfDay(parseDateString(to)),
 	});
 
 	return c.json({
