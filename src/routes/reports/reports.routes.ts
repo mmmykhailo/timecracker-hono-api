@@ -35,7 +35,7 @@ export const getReportByDateRoute = createRoute({
 	security: [{ Bearer: [] }],
 	request: {
 		params: z.object({
-			date: z.string(),
+			date: z.string().openapi({ example: "20250321" }),
 		}),
 	},
 	responses: {
@@ -65,7 +65,7 @@ export const putReportByDateRoute = createRoute({
 	security: [{ Bearer: [] }],
 	request: {
 		params: z.object({
-			date: z.string(),
+			date: z.string().openapi({ example: "20250321" }),
 		}),
 		body: {
 			content: {
@@ -174,8 +174,8 @@ export const getDailyDurationsRoute = createRoute({
 	security: [{ Bearer: [] }],
 	request: {
 		query: z.object({
-			from: z.string().transform((str) => new Date(str)),
-			to: z.string().transform((str) => new Date(str)),
+			from: z.string().openapi({ example: "20250321" }),
+			to: z.string().openapi({ example: "20250321" }),
 		}),
 	},
 	responses: {
