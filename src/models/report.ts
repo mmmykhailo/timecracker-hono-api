@@ -177,10 +177,12 @@ export async function findDailyDurationsByOwner({
 		})
 		.toArray();
 
-	const dailyDurations: Record<string, number> = {};
+	const dailyDurations: Record<string, { totalDuration: number }> = {};
 
 	for (const item of durationsArray) {
-		dailyDurations[formatDateString(item.date)] = item.duration;
+		dailyDurations[formatDateString(item.date)] = {
+			totalDuration: item.duration,
+		};
 	}
 
 	return dailyDurations;

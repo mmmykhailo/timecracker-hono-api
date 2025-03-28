@@ -185,11 +185,16 @@ export const getDailyDurationsRoute = createRoute({
 				"application/json": {
 					schema: z.object({
 						dailyDurations: z
-							.record(z.string(), z.number().int().min(0))
+							.record(
+								z.string(),
+								z.object({
+									totalDuration: z.number().int().min(0),
+								}),
+							)
 							.openapi({
 								example: {
-									"20250319": 360,
-									"20250320": 30,
+									"20250319": { totalDuration: 360 },
+									"20250320": { totalDuration: 30 },
 								},
 							}),
 					}),
