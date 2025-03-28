@@ -100,11 +100,14 @@ export async function upsertReportByDateAndOwnerId({
 }) {
 	const reports = getCollection<Report>("reports");
 
+	const refinedReportData = refineReportDuration(reportData);
+
 	const result = await reports.findOneAndUpdate(
 		{ date: startOfDay(date), ownerId: new ObjectId(ownerId) },
 		{
 			$set: {
-				...refineReportDuration(reportData),
+				duration: refinedReportData.duration,
+				entries: refinedReportData.entries,
 				date: startOfDay(date),
 			},
 		},
